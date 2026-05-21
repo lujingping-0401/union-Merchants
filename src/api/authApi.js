@@ -14,3 +14,11 @@ export const getCaptcha = () => {
 export const login = (data) => {
   return axios("/merchant/auth/login", "POST", data);
 };
+
+/**
+ * 获取当前商家信息
+ */
+export const getCurrentMerchant = () => {
+  return axios("/merchant/auth/current", "GET");
+};
+

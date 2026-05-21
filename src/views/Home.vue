@@ -1,21 +1,5 @@
 <template>
-  <el-container class="app-layout">
-    <!-- Header -->
-    <Header />
-
-    <el-container class="body-container">
-      <!-- 侧边栏 -->
-      <Sidebar />
-
-      <!-- 主要内容 -->
-      <el-main class="app-main">
-        <!-- Page Header -->
-        <div class="page-title-row">
-          <div>
-            <h2 class="page-title">数据概览</h2>
-            <p class="page-subtitle">监控商铺的销售概况、核心交易数据与商户名录。</p>
-          </div>
-        </div>
+  <div class="home-container">
         <!-- 数据卡片行 -->
         <el-row :gutter="20" class="stat-row">
           <el-col :xs="24" :sm="12" :md="8" :lg="6">
@@ -109,16 +93,16 @@
             </el-table-column>
           </el-table>
         </el-card>
-      </el-main>
-    </el-container>
-  </el-container>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
-import Sidebar from '@/components/Sidebar.vue'
-import Header from '@/components/Header.vue'
+
+defineOptions({
+  name: 'Home'
+})
 
 const loading = ref(false)
 
@@ -174,43 +158,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.app-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.body-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.app-main {
-  background-color: #f8fafc;
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.page-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-}
-
-.page-subtitle {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
+.home-container {
+  width: 100%;
 }
 
 .stat-row {

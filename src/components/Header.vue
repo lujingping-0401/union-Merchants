@@ -9,7 +9,10 @@
     <div class="header-right">
       <el-dropdown trigger="click" @command="handleHeaderCommand">
         <div class="user-info">
-          <div class="char-avatar">{{ avatarChar }}</div>
+          <div class="char-avatar">
+            <img v-if="merchantInfo && merchantInfo.businessLicenseUrl" :src="merchantInfo.businessLicenseUrl" alt="avatar" class="avatar-img" />
+            <span v-else>{{ avatarChar }}</span>
+          </div>
           <span class="nickname">{{ nickname }}</span>
           <el-icon class="arrow-icon"><ArrowDown /></el-icon>
         </div>
@@ -29,18 +32,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { removeToken } from '@/utils/token'
+import { resetBreadcrumbs } from '@/utils/breadcrumbState'
+import { merchantInfo, nickname, avatarChar, clearMerchantInfo } from '@/utils/merchantState'
 
 const router = useRouter()
-
-const nickname = ref(localStorage.getItem('nickname') || localStorage.getItem('username') || '工会商家')
-const avatarChar = computed(() => {
-  const name = nickname.value.trim()
-  return name ? name.charAt(0).toUpperCase() : '商'
-})
 
 const handleHeaderCommand = (command) => {
   if (command === 'logout') {
@@ -50,6 +48,8 @@ const handleHeaderCommand = (command) => {
       type: 'warning'
     }).then(() => {
       removeToken()
+      resetBreadcrumbs()
+      clearMerchantInfo()
       ElMessage.success('退出成功')
       router.push('/login')
     }).catch(() => {})
@@ -116,6 +116,13 @@ const handleHeaderCommand = (command) => {
   font-weight: bold;
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .nickname {

@@ -10,6 +10,23 @@ async function merchantRequest(url, method = "GET", body = null, isUpload = fals
   
   // 注入 Token（兼容后端安全审计）
   const token = localStorage.getItem("union-admin-token") || localStorage.getItem("token");
+  
+  if (token === 'mock-token') {
+    if (url === '/merchant/upload-file/upload' && method.toUpperCase() === 'POST') {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            code: 200,
+            msg: 'success',
+            data: {
+              filePath: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&auto=format&fit=crop&q=80'
+            }
+          });
+        }, 300);
+      });
+    }
+  }
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/token'
+import { addBreadcrumb } from '@/utils/breadcrumbState'
+import MainLayout from '@/layout/MainLayout.vue'
 
 const routes = [
   {
@@ -10,15 +12,22 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/Home.vue'),
-    meta: { title: '商家主页', requiresAuth: true }
-  },
-  {
-    path: '/product',
-    name: 'Product',
-    component: () => import('@/views/Product.vue'),
-    meta: { title: '商品管理', requiresAuth: true }
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@/views/Home.vue'),
+        meta: { title: '商家主页' }
+      },
+      {
+        path: 'product',
+        name: 'Product',
+        component: () => import('@/views/Product.vue'),
+        meta: { title: '商品管理' }
+      }
+    ]
   },
   {
     path: '/merchant-apply',
@@ -53,6 +62,11 @@ router.beforeEach((to, from, next) => {
       next()
     }
   }
+})
+
+// 后置路由守卫更新面包屑
+router.afterEach((to) => {
+  addBreadcrumb(to)
 })
 
 export default router

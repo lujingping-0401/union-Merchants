@@ -32,3 +32,11 @@ export const addProduct = (data) => {
 export const updateProduct = (productId, data) => {
   return axios(`/merchant/products/${productId}`, "PUT", data);
 };
+
+/**
+ * 获取商品分类树
+ */
+export const getProductCategoryTree = () => {
+  return axios("/merchant/product-categories/tree", "GET");
+};
+
