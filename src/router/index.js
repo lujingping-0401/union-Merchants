@@ -48,9 +48,10 @@ router.beforeEach((to, from, next) => {
   const token = getToken()
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!token) {
+      const redirect = to.path === '/' ? undefined : to.fullPath
       next({
         path: '/login',
-        query: { redirect: to.fullPath }
+        query: redirect ? { redirect } : undefined
       })
     } else {
       next()

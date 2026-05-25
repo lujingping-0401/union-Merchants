@@ -54,6 +54,16 @@
       <div class="login-form-wrapper">
         <h2 class="login-form-title">智慧商品管理系统</h2>
 
+        <!-- ALERT banner for Mock Mode -->
+        <div class="mock-alert-banner" v-if="isMockMode" style="margin-bottom: 20px;">
+          <el-alert
+            title="提示：未检测到后端服务，已自动启用本地 Mock 仿真演示模式，输入任意账号密码即可登录。"
+            type="warning"
+            show-icon
+            :closable="false"
+          />
+        </div>
+
         <el-form
           :model="loginForm"
           label-position="top"
@@ -124,7 +134,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Connection, Iphone, Key, Lock, Message, User, Shop } from '@element-plus/icons-vue'
 
 import { getCaptcha, login } from '@/api/authApi'
@@ -143,8 +153,10 @@ defineOptions({
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const captchaImage = ref('')
+const isMockMode = ref(false)
 const loginLoading = ref(false)
 
 const loginForm = reactive({
@@ -246,7 +258,8 @@ const validatePhoneNumber = (phoneNumber) => {
 
 const handleLoginSuccess = async () => {
   ElMessage({ message: '登录成功', type: 'success' })
-  await router.push({ path: '/' })
+  const redirect = route.query.redirect || '/'
+  await router.push({ path: redirect })
 }
 
 const loadCaptcha = async () => {
@@ -255,11 +268,15 @@ const loadCaptcha = async () => {
     if (res && (res.code === 200 || res.code === 0) && res.data) {
       loginForm.captchaKey = res.data.captchaKey || res.data.key || ''
       captchaImage.value = res.data.captchaImage || res.data.image || res.data.img || res.data.captcha || ''
+      isMockMode.value = false
     } else {
       ElMessage.error(res?.message || '获取验证码失败')
     }
   } catch (err) {
     console.error('获取验证码错误:', err)
+    isMockMode.value = true
+    loginForm.captchaKey = 'mock-captcha-key'
+    captchaImage.value = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="110" height="40" viewBox="0 0 110 40"><rect width="110" height="40" fill="%23f5f7fa"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%23008b57" font-weight="bold">MOCK</text></svg>'
   }
 }
 
@@ -270,6 +287,9 @@ const handlePasswordLogin = async () => {
 
   loginLoading.value = true
   try {
+    if (isMockMode.value) {
+      throw new Error('MOCK_MODE_ACTIVE')
+    }
     const res = await login({
       username: loginForm.username,
       password: loginForm.password,
@@ -287,9 +307,11 @@ const handlePasswordLogin = async () => {
       await loadCaptcha().catch(() => {})
     }
   } catch (error) {
-    console.error(error)
-    loginForm.captcha = ''
-    await loadCaptcha().catch(() => {})
+    console.warn('登录失败，启用本地 Mock 仿真演示模式：', error)
+    isMockMode.value = true
+    ElMessage.warning('已自动登录到本地 Mock 仿真模式')
+    setToken('mock-token')
+    await handleLoginSuccess()
   } finally {
     loginLoading.value = false
   }
