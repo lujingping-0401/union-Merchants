@@ -18,10 +18,7 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="goHome">
-              <el-icon><Menu /></el-icon>旧版主页
-            </el-dropdown-item>
-            <el-dropdown-item divided command="logout" class="logout-menu-item">
+            <el-dropdown-item command="logout" class="logout-menu-item">
               <el-icon><SwitchButton /></el-icon>退出登录
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -30,15 +27,35 @@
     </div>
   </el-header>
 </template>
-
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { removeToken } from '@/utils/token'
 import { resetBreadcrumbs } from '@/utils/breadcrumbState'
-import { merchantInfo, nickname, avatarChar, clearMerchantInfo } from '@/utils/merchantState'
+import { getCurrentMerchant } from '@/api/authApi'
+import {
+  merchantInfo,
+  nickname,
+  avatarChar,
+  clearMerchantInfo,
+  setMerchantInfo,
+  loadMerchantInfoFromStorage
+} from '@/utils/merchantState'
 
 const router = useRouter()
+
+onMounted(async () => {
+  loadMerchantInfoFromStorage()
+  try {
+    const res = await getCurrentMerchant()
+    if (res && (res.code === 200 || res.code === 0) && res.data) {
+      setMerchantInfo(res.data)
+    }
+  } catch (error) {
+    console.error('获取商户信息失败:', error)
+  }
+})
 
 const handleHeaderCommand = (command) => {
   if (command === 'logout') {
@@ -53,8 +70,6 @@ const handleHeaderCommand = (command) => {
       ElMessage.success('退出成功')
       router.push('/login')
     }).catch(() => {})
-  } else if (command === 'goHome') {
-    router.push('/')
   }
 }
 </script>
@@ -80,7 +95,7 @@ const handleHeaderCommand = (command) => {
 
 .logo-icon {
   font-size: 24px;
-  color: #6366f1;
+  color: #00a86b;
 }
 
 .logo-title {
@@ -108,14 +123,14 @@ const handleHeaderCommand = (command) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #00a86b 0%, #10b981 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 14px;
-  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 168, 107, 0.2);
   overflow: hidden;
 }
 

@@ -35,34 +35,21 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import { breadcrumbs, removeBreadcrumb } from '@/utils/breadcrumbState'
-import { getCurrentMerchant } from '@/api/authApi'
-import { setMerchantInfo, loadMerchantInfoFromStorage } from '@/utils/merchantState'
 
 const route = useRoute()
 const router = useRouter()
-
-onMounted(async () => {
-  loadMerchantInfoFromStorage()
-  try {
-    const res = await getCurrentMerchant()
-    if (res && (res.code === 200 || res.code === 0) && res.data) {
-      setMerchantInfo(res.data)
-    }
-  } catch (error) {
-    console.error('获取商户信息失败:', error)
-  }
-})
 
 // Compute the list of component names to be kept alive based on current active tabs
 const cachedNames = computed(() => {
   return breadcrumbs.value.map(item => {
     if (item.path === '/') return 'Home'
     if (item.path === '/product') return 'Product'
+    if (item.path === '/product-apply') return 'ProductApply'
     return ''
   }).filter(Boolean)
 })
@@ -139,20 +126,20 @@ const handleBreadcrumbClose = (path) => {
 .breadcrumb-tag:hover,
 .breadcrumb-tag.active {
   background-color: #ffffff !important;
-  color: #419eff !important;
-  border-color: #bfdbfe !important;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1) !important;
+  color: #00a86b !important;
+  border-color: rgba(0, 168, 107, 0.3) !important;
+  box-shadow: 0 8px 20px rgba(0, 168, 107, 0.1) !important;
 }
 
 .breadcrumb-tag:hover :deep(.el-tag__close),
 .breadcrumb-tag.active :deep(.el-tag__close) {
-  color: #419eff !important;
+  color: #00a86b !important;
 }
 
 .breadcrumb-tag:hover :deep(.el-tag__close:hover),
 .breadcrumb-tag.active :deep(.el-tag__close:hover) {
-  background-color: rgba(65, 158, 255, 0.2) !important;
-  color: #419eff !important;
+  background-color: rgba(0, 168, 107, 0.2) !important;
+  color: #00a86b !important;
 }
 
 /* Inactive tag style (default state close icon color) */
@@ -162,7 +149,7 @@ const handleBreadcrumbClose = (path) => {
 }
 
 .breadcrumb-tag.inactive :deep(.el-tag__close:hover) {
-  background-color: rgba(65, 158, 255, 0.2) !important;
-  color: #419eff !important;
+  background-color: rgba(0, 168, 107, 0.2) !important;
+  color: #00a86b !important;
 }
 </style>

@@ -225,11 +225,12 @@
                   </el-button>
                   <el-button
                     link
-                    :type="scope.row.status === 1 ? 'warning' : 'success'"
+                    type="danger"
                     size="default"
-                    @click="toggleStatus(scope.row)"
+                    :disabled="scope.row.status !== 1"
+                    @click="handleDelist(scope.row)"
                   >
-                    <el-icon><SwitchButton /></el-icon>{{ scope.row.status === 1 ? "下架" : "上架" }}
+                    <el-icon><SwitchButton /></el-icon>下架
                   </el-button>
                 </template>
               </el-table-column>
@@ -294,15 +295,6 @@
                 <div v-if="productForm.coverUrl" class="cover-hover-mask">
                   <span class="mask-action"><el-icon><Edit /></el-icon> 更换封面</span>
                 </div>
-                <el-button
-                  v-if="productForm.coverUrl"
-                  type="danger"
-                  :icon="Delete"
-                  circle
-                  size="small"
-                  class="img-remove-btn"
-                  @click.stop="productForm.coverUrl = ''"
-                />
               </div>
               <input
                 ref="coverInputRef"
@@ -411,13 +403,6 @@
               </el-form-item>
             </div>
 
-            <el-form-item label="上下架运营状态" prop="status">
-              <el-radio-group v-model="productForm.status">
-                <el-radio-button :label="0">未上架</el-radio-button>
-                <el-radio-button :label="1">已上架</el-radio-button>
-                <el-radio-button :label="2">已下架</el-radio-button>
-              </el-radio-group>
-            </el-form-item>
 
             <el-form-item label="商品详细描述" prop="description" class="desc-form-item">
               <el-input
@@ -559,163 +544,223 @@
       :destroy-on-close="true"
       class="product-detail-dialog"
     >
-      <div v-if="detailData" class="product-detail">
-        <div class="detail-split-container">
-          <!-- Left side: Media Section -->
-          <div class="detail-left-section">
-            <!-- Cover image display -->
-            <div class="detail-card cover-card">
-              <div class="detail-card-title">商品封面</div>
-              <div class="detail-cover-wrapper">
-                <el-image
-                  :src="resolveUrl(detailData.coverUrl)"
-                  :preview-src-list="[resolveUrl(detailData.coverUrl)]"
-                  preview-teleported
-                  fit="cover"
-                  class="detail-cover"
-                />
-                <div class="detail-status-tag">
-                  <el-tag
-                    :type="detailData.status === 1 ? 'success' : detailData.status === 2 ? 'danger' : 'info'"
-                    effect="dark"
-                  >
-                    {{ detailData.status === 1 ? "已上架" : detailData.status === 2 ? "已下架" : "未上架" }}
-                  </el-tag>
+      <el-tabs v-model="activeTab" class="detail-tabs" v-if="detailData">
+        <!-- Tab 1: 商品信息 -->
+        <el-tab-pane label="商品信息" name="info">
+          <div class="product-detail">
+            <div class="detail-split-container">
+              <!-- Left side: Media Section -->
+              <div class="detail-left-section">
+                <!-- Cover image display -->
+                <div class="detail-card cover-card">
+                  <div class="detail-card-title">商品封面</div>
+                  <div class="detail-cover-wrapper">
+                    <el-image
+                      :src="resolveUrl(detailData.coverUrl)"
+                      :preview-src-list="[resolveUrl(detailData.coverUrl)]"
+                      preview-teleported
+                      fit="cover"
+                      class="detail-cover"
+                    />
+                    <div class="detail-status-tag">
+                      <el-tag
+                        :type="detailData.status === 1 ? 'success' : detailData.status === 2 ? 'danger' : 'info'"
+                        effect="dark"
+                      >
+                        {{ detailData.status === 1 ? "已上架" : detailData.status === 2 ? "已下架" : "未上架" }}
+                      </el-tag>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- Carousel pictures display -->
-            <div
-              class="detail-card carousel-card"
-              v-if="detailData.carouselUrls && detailData.carouselUrls.length"
-            >
-              <div class="detail-card-title">轮播展示图</div>
-              <div class="detail-carousels">
-                <el-image
-                  v-for="(url, idx) in detailData.carouselUrls"
-                  :key="idx"
-                  :src="resolveUrl(url)"
-                  fit="cover"
-                  class="carousel-thumb"
-                  :preview-src-list="detailData.carouselUrls.map(resolveUrl)"
-                  :initial-index="idx"
-                  preview-teleported
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Right side: Basic Information -->
-          <div class="detail-right-section">
-            <div class="detail-card info-card">
-              <div class="detail-card-title">基本信息</div>
-              
-              <div class="detail-name-wrapper">
-                <div class="detail-name-label">商品名称</div>
-                <h3 class="detail-product-name">{{ detailData.productName }}</h3>
-              </div>
-
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">商品 ID</span>
-                  <span class="info-value">{{ detailData.id }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">商品分类</span>
-                  <span class="info-value">
-                    <el-tag type="info" size="small" effect="plain">{{
-                      detailData.categoryName || "未分类"
-                    }}</el-tag>
-                  </span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">发货地点</span>
-                  <span class="info-value">{{
-                    detailData.deliveryPlace || "未知"
-                  }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">总库存</span>
-                  <span class="info-value">{{ detailData.totalStock }} 件</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">创建时间</span>
-                  <span class="info-value">{{
-                    formatDate(detailData.createTime)
-                  }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">更新时间</span>
-                  <span class="info-value">{{
-                    formatDate(detailData.updateTime)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Description -->
-            <div class="detail-card desc-card">
-              <div class="detail-card-title">商品描述</div>
-              <p class="detail-description">
-                {{ detailData.description || "暂无商品描述" }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Specifications Table -->
-        <div class="detail-specs-section-wrapper">
-          <div class="detail-specs-section-header">
-            <span class="detail-specs-section-title">
-              <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 ({{
-                detailData.specs ? detailData.specs.length : 0
-              }})
-            </span>
-          </div>
-          <el-table
-            :data="detailData.specs"
-            class="detail-specs-table"
-            style="width: 100%"
-            border
-            size="default"
-          >
-            <el-table-column label="规格图片" width="100" align="center">
-              <template #default="scope">
-                <el-image
-                  :src="resolveUrl(scope.row.imageUrl)"
-                  :preview-src-list="[resolveUrl(scope.row.imageUrl)]"
-                  preview-teleported
-                  fit="cover"
-                  class="spec-thumb-img"
-                  v-if="scope.row.imageUrl"
-                />
-                <span v-else class="no-img-text">无图</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="specName" label="规格属性名称" min-width="200" />
-            <el-table-column prop="price" label="单价 (元)" min-width="140">
-              <template #default="scope">
-                <span class="price-text"
-                  >¥ {{ (Number(scope.row.price) || 0).toFixed(2) }}</span
+                <!-- Carousel pictures display -->
+                <div
+                  class="detail-card carousel-card"
+                  v-if="detailData.carouselUrls && detailData.carouselUrls.length"
                 >
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="stock"
-              label="库存数量"
-              min-width="130"
-              align="center"
-            />
-            <el-table-column
-              prop="sort"
-              label="排序值"
-              min-width="110"
-              align="center"
-            />
-          </el-table>
-        </div>
-      </div>
+                  <div class="detail-card-title">轮播展示图</div>
+                  <div class="detail-carousels">
+                    <el-image
+                      v-for="(url, idx) in detailData.carouselUrls"
+                      :key="idx"
+                      :src="resolveUrl(url)"
+                      fit="cover"
+                      class="carousel-thumb"
+                      :preview-src-list="detailData.carouselUrls.map(resolveUrl)"
+                      :initial-index="idx"
+                      preview-teleported
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right side: Basic Information -->
+              <div class="detail-right-section">
+                <div class="detail-card info-card">
+                  <div class="detail-card-title">基本信息</div>
+                  
+                  <div class="detail-name-wrapper">
+                    <div class="detail-name-label">商品名称</div>
+                    <h3 class="detail-product-name">{{ detailData.productName }}</h3>
+                  </div>
+
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="info-label">商品 ID</span>
+                      <span class="info-value">{{ detailData.id }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">商品分类</span>
+                      <span class="info-value">
+                        <el-tag type="info" size="small" effect="plain">{{
+                          detailData.categoryName || "未分类"
+                        }}</el-tag>
+                      </span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">发货地点</span>
+                      <span class="info-value">{{
+                        detailData.deliveryPlace || "未知"
+                      }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">总库存</span>
+                      <span class="info-value">{{ detailData.totalStock }} 件</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">创建时间</span>
+                      <span class="info-value">{{
+                        formatDate(detailData.createTime)
+                      }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">更新时间</span>
+                      <span class="info-value">{{
+                        formatDate(detailData.updateTime)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="detail-card desc-card">
+                  <div class="detail-card-title">商品描述</div>
+                  <p class="detail-description">
+                    {{ detailData.description || "暂无商品描述" }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Specifications Table -->
+            <div class="detail-specs-section-wrapper">
+              <div class="detail-specs-section-header">
+                <span class="detail-specs-section-title">
+                  <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 ({{
+                    detailData.specs ? detailData.specs.length : 0
+                  }})
+                </span>
+              </div>
+              <el-table
+                :data="detailData.specs"
+                class="detail-specs-table"
+                style="width: 100%"
+                border
+                size="default"
+              >
+                <el-table-column label="规格图片" width="100" align="center">
+                  <template #default="scope">
+                    <el-image
+                      :src="resolveUrl(scope.row.imageUrl)"
+                      :preview-src-list="[resolveUrl(scope.row.imageUrl)]"
+                      preview-teleported
+                      fit="cover"
+                      class="spec-thumb-img"
+                      v-if="scope.row.imageUrl"
+                    />
+                    <span v-else class="no-img-text">无图</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="specName" label="规格属性名称" min-width="200" />
+                <el-table-column prop="price" label="单价 (元)" min-width="140">
+                  <template #default="scope">
+                    <span class="price-text"
+                      >¥ {{ (Number(scope.row.price) || 0).toFixed(2) }}</span
+                    >
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="stock"
+                  label="库存数量"
+                  min-width="130"
+                  align="center"
+                />
+                <el-table-column
+                  prop="sort"
+                  label="排序值"
+                  min-width="110"
+                  align="center"
+                />
+              </el-table>
+            </div>
+          </div>
+        </el-tab-pane>
+
+        <!-- Tab 2: 变更记录 -->
+        <el-tab-pane label="变更记录" name="logs">
+          <div class="change-logs-container" v-loading="changeLogsLoading">
+            <el-table :data="changeLogs" border style="width: 100%" max-height="550">
+              <el-table-column label="变更时间" width="180" align="center">
+                <template #default="scope">
+                  <span>{{ formatDate(scope.row.createTime) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作人" width="180" align="center">
+                <template #default="scope">
+                  <span style="font-weight: 600;">{{ getOperatorNameText(scope.row) }}</span>
+                  <el-tag size="small" type="info" style="margin-left: 6px;" v-if="scope.row.operatorType !== undefined">
+                    {{ scope.row.operatorType === 1 ? '商家' : scope.row.operatorType === 2 ? '平台' : '系统' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="关联业务" width="120" align="center">
+                <template #default="scope">
+                  <el-tag type="info" effect="plain">
+                    {{ getRelatedBizTypeText(scope.row.relatedBizType) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="变更类型" width="100" align="center">
+                <template #default="scope">
+                  <el-tag :type="getChangeTypeTag(scope.row.changeType)" effect="light">
+                    {{ getChangeTypeText(scope.row.changeType) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="fieldName" label="变更字段" width="130" align="center" show-overflow-tooltip>
+                <template #default="scope">
+                  <span style="color: #475569; font-weight: 600;">{{ scope.row.fieldName || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="变更前" min-width="150" align="left" show-overflow-tooltip>
+                <template #default="scope">
+                  <span class="value-before">{{ formatChangeValue(scope.row.fieldName, scope.row.beforeValue) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="变更后" min-width="150" align="left" show-overflow-tooltip>
+                <template #default="scope">
+                  <span class="value-after">{{ formatChangeValue(scope.row.fieldName, scope.row.afterValue) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="reason" label="变更原因" min-width="150" align="left" show-overflow-tooltip>
+                <template #default="scope">
+                  <span>{{ scope.row.reason || '-' }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="detailDrawerVisible = false">关闭</el-button>
@@ -745,12 +790,15 @@ import {
   Loading,
 } from "@element-plus/icons-vue";
 import { removeToken } from "@/utils/token";
+import { formatDate } from "@/utils/date.js";
 import {
   getProductPage,
   getProductDetail,
   addProduct,
   updateProduct,
   getProductCategoryTree,
+  delistProduct,
+  getProductChangeLogs,
 } from "@/api/productApi";
 import { merchantApis } from "@/api/merchantApplyApi";
 import { baseUrl } from "@/utils/baseUrl.js";
@@ -819,24 +867,7 @@ const loadCategoryTree = async () => {
 };
 
 
-// Date Formatter helper
-const formatDate = (dateVal) => {
-  if (!dateVal) return "-";
-  if (typeof dateVal === "string") return dateVal;
-  try {
-    const d = new Date(dateVal);
-    if (isNaN(d.getTime())) return "-";
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const r = String(d.getDate()).padStart(2, "0");
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    const ss = String(d.getSeconds()).padStart(2, "0");
-    return `${y}-${m}-${r} ${hh}:${mm}:${ss}`;
-  } catch (e) {
-    return "-";
-  }
-};
+
 
 // Image upload helpers
 const coverInputRef = ref(null);
@@ -974,13 +1005,35 @@ const handleCurrentChange = (val) => {
 // Product detail view drawer state
 const detailDrawerVisible = ref(false);
 const detailData = ref(null);
+const activeTab = ref("info");
+const changeLogs = ref([]);
+const changeLogsLoading = ref(false);
+
+const loadChangeLogs = async (productId) => {
+  changeLogsLoading.value = true;
+  try {
+    const res = await getProductChangeLogs(productId);
+    if (res && (res.code === 200 || res.code === 0)) {
+      changeLogs.value = res.data || [];
+    } else {
+      ElMessage.error(res?.message || "获取变更记录失败");
+    }
+  } catch (err) {
+    console.error("获取变更记录失败:", err);
+  } finally {
+    changeLogsLoading.value = false;
+  }
+};
 
 const handleView = async (row) => {
+  activeTab.value = "info";
+  changeLogs.value = [];
   try {
     const res = await getProductDetail(row.id);
     if (res && (res.code === 200 || res.code === 0) && res.data) {
       detailData.value = res.data;
       detailDrawerVisible.value = true;
+      loadChangeLogs(row.id);
     } else {
       throw new Error(res?.message || "详情获取失败");
     }
@@ -988,6 +1041,63 @@ const handleView = async (row) => {
     ElMessage.error(err.message || "获取商品详情失败");
   }
 };
+
+const getChangeTypeText = (type) => {
+  if (!type) return "修改";
+  const val = type.toUpperCase();
+  if (val === "CREATE" || val === "ADD") return "新增";
+  if (val === "UPDATE" || val === "MODIFY") return "修改";
+  if (val === "DELIST" || val === "OFF_SHELF") return "下架";
+  if (val === "LIST" || val === "ON_SHELF") return "上架";
+  if (val === "APPROVE_LIST") return "审批上架";
+  if (val === "AUTO_UNLIST") return "自动下架";
+  if (val === "FORCE_DELIST") return "强制下架";
+  return type;
+};
+
+const getChangeTypeTag = (type) => {
+  if (!type) return "primary";
+  const val = type.toUpperCase();
+  if (val === "CREATE" || val === "ADD") return "success";
+  if (val === "UPDATE" || val === "MODIFY") return "primary";
+  if (val === "DELIST" || val === "OFF_SHELF") return "danger";
+  if (val === "LIST" || val === "ON_SHELF") return "success";
+  if (val === "APPROVE_LIST") return "success";
+  if (val === "AUTO_UNLIST") return "warning";
+  if (val === "FORCE_DELIST") return "danger";
+  return "info";
+};
+
+const getRelatedBizTypeText = (type) => {
+  if (!type) return "-";
+  const val = type.toUpperCase();
+  if (val === "PRODUCT") return "商品";
+  if (val === "PRODUCT_LISTING") return "上架申请";
+  return type;
+};
+
+const getOperatorNameText = (row) => {
+  if (row.operatorName) return row.operatorName;
+  if (row.operatorType === 3) return "系统自动";
+  if (row.operatorId !== null && row.operatorId !== undefined) return `ID:${row.operatorId}`;
+  return "系统";
+};
+
+const formatChangeValue = (fieldName, value) => {
+  if (value === null || value === undefined || value === "") return "空";
+  
+  const field = (fieldName || "").toLowerCase();
+  // Check if field is status related
+  if (field === "status" || field.includes("状态")) {
+    const valStr = String(value).trim();
+    if (valStr === "0") return "未上架";
+    if (valStr === "1") return "已上架";
+    if (valStr === "2") return "已下架";
+  }
+  
+  return value;
+};
+
 
 // Create/Edit form dialog state
 const formDialogVisible = ref(false);
@@ -1003,7 +1113,7 @@ const productForm = reactive({
   deliveryPlace: "",
   categoryId: "",
   categoryName: "",
-  status: 1,
+  status: 0,
   specs: [],
 });
 
@@ -1029,7 +1139,7 @@ const openCreateDrawer = () => {
     deliveryPlace: "",
     categoryId: "",
     categoryName: "",
-    status: 1,
+    status: 0,
     specs: [
       { specName: "默认规格", imageUrl: "", price: 9.9, stock: 100, sort: 1 },
     ],
@@ -1056,7 +1166,7 @@ const handleEdit = async (row) => {
         deliveryPlace: data.deliveryPlace || "",
         categoryId: data.categoryId || "",
         categoryName: data.categoryName || "",
-        status: data.status !== undefined ? data.status : 1,
+        status: data.status !== undefined ? data.status : 0,
         specs:
           data.specs && data.specs.length
             ? data.specs.map((s) => ({ ...s }))
@@ -1177,51 +1287,28 @@ const submitForm = async () => {
   });
 };
 
-// Toggle Online/Offline status
-const toggleStatus = async (row) => {
-  const newStatus = row.status === 1 ? 2 : 1;
-  const actionText = newStatus === 1 ? "上架" : "下架";
-
+// 下架商品
+const handleDelist = async (row) => {
   ElMessageBox.confirm(
-    `确定要${actionText}商品「${row.productName}」吗？`,
+    `确定要下架商品「${row.productName}」吗？`,
     "提示",
     {
-      confirmButtonText: "确定",
+      confirmButtonText: "确定下架",
       cancelButtonText: "取消",
       type: "warning",
     }
   )
     .then(async () => {
       try {
-        const resDetail = await getProductDetail(row.id);
-        if (
-          !resDetail ||
-          !(resDetail.code === 200 || resDetail.code === 0) ||
-          !resDetail.data
-        ) {
-          throw new Error("未获取到商品最新数据");
-        }
-        const fullData = resDetail.data;
-        const updatePayload = {
-          productName: fullData.productName,
-          coverUrl: fullData.coverUrl,
-          carouselUrls: fullData.carouselUrls,
-          description: fullData.description,
-          deliveryPlace: fullData.deliveryPlace,
-          categoryId: fullData.categoryId,
-          categoryName: fullData.categoryName,
-          status: newStatus,
-          specs: fullData.specs,
-        };
-        const resUpdate = await updateProduct(row.id, updatePayload);
-        if (resUpdate && (resUpdate.code === 200 || resUpdate.code === 0)) {
-          ElMessage.success(`商品已${actionText}`);
+        const res = await delistProduct(row.id);
+        if (res && (res.code === 200 || res.code === 0)) {
+          ElMessage.success("商品已下架");
           loadProducts();
         } else {
-          throw new Error(resUpdate?.message || "修改状态失败");
+          throw new Error(res?.message || "下架请求失败");
         }
       } catch (err) {
-        ElMessage.error(`操作失败: ${err.message}`);
+        ElMessage.error(`下架失败: ${err.message}`);
       }
     })
     .catch(() => {});
@@ -1267,13 +1354,13 @@ onMounted(() => {
 
 
 .btn-create {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #00a86b 0%, #008655 100%);
   border: none;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 168, 107, 0.3);
 }
 
 .btn-create:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  background: linear-gradient(135deg, #008655 0%, #006b43 100%);
 }
 
 /* Search panel styling */
@@ -1392,9 +1479,9 @@ onMounted(() => {
 }
 
 .cover-upload-zone:hover {
-  border-color: #6366f1;
-  background: #f5f3ff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.06);
+  border-color: #00a86b;
+  background: #e6f7f0;
+  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.06);
 }
 
 .cover-upload-preview {
@@ -1425,7 +1512,7 @@ onMounted(() => {
 }
 
 .cover-upload-zone:hover .cover-upload-icon {
-  color: #6366f1;
+  color: #00a86b;
   transform: translateY(-2px);
 }
 
@@ -1536,7 +1623,7 @@ onMounted(() => {
 .product-form :deep(.el-textarea__inner:focus),
 .product-form :deep(.el-select__wrapper.is-focus),
 .product-form :deep(.el-select .el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #6366f1 inset, 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+  box-shadow: 0 0 0 1px #00a86b inset, 0 0 0 3px rgba(0, 168, 107, 0.1) !important;
   background-color: transparent;
 }
 
@@ -1570,8 +1657,8 @@ onMounted(() => {
 }
 
 .carousel-upload-card:hover {
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #00a86b;
+  background: #e6f7f0;
 }
 
 .carousel-card-img {
@@ -1624,7 +1711,7 @@ onMounted(() => {
 
 .carousel-add-card:hover .carousel-add-icon {
   transform: scale(1.15) rotate(90deg);
-  color: #6366f1;
+  color: #00a86b;
 }
 
 /* Specs Section styling */
@@ -1650,7 +1737,7 @@ onMounted(() => {
 }
 
 .specs-title-icon {
-  color: #6366f1;
+  color: #00a86b;
   font-size: 16px;
 }
 
@@ -1687,8 +1774,8 @@ onMounted(() => {
 }
 
 .specs-modern-table :deep(.el-input__wrapper.is-focus) {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+  border-color: #00a86b;
+  box-shadow: 0 0 0 2px rgba(0, 168, 107, 0.1) !important;
 }
 
 /* Spec image mini-uploader */
@@ -1709,8 +1796,8 @@ onMounted(() => {
 }
 
 .spec-img-upload:hover {
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #00a86b;
+  background: #e6f7f0;
 }
 
 .spec-img-thumb {
@@ -1949,7 +2036,7 @@ onMounted(() => {
 }
 
 .price-text {
-  color: #6366f1;
+  color: #00a86b;
   font-weight: 600;
 }
 
@@ -1989,6 +2076,39 @@ onMounted(() => {
   font-size: 13px;
   color: #64748b;
   font-weight: 600;
+}
+
+.detail-tabs :deep(.el-tabs__nav-wrap) {
+  padding: 0 24px;
+  background-color: #ffffff;
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.change-logs-container {
+  padding: 24px;
+  background-color: #ffffff;
+}
+
+.value-before {
+  color: #ef4444;
+  text-decoration: line-through;
+  background-color: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.value-after {
+  color: #10b981;
+  background-color: #ecfdf5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 500;
 }
 </style>
 
