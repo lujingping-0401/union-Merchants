@@ -1,11 +1,11 @@
-import { axios } from "@/utils/request.js";
+import request from "@/utils/request.js";
 
 /**
  * 商品分页列表
  * @param {Object} params - { pageNum, pageSize, productName, status, categoryId }
  */
 export const getProductPage = (params) => {
-  return axios("/merchant/products", "GET", params);
+  return request.get("/merchant/products", { params });
 };
 
 /**
@@ -13,7 +13,7 @@ export const getProductPage = (params) => {
  * @param {number|string} productId - 商品ID
  */
 export const getProductDetail = (productId) => {
-  return axios(`/merchant/products/${productId}`, "GET");
+  return request.get(`/merchant/products/${productId}`);
 };
 
 /**
@@ -21,7 +21,7 @@ export const getProductDetail = (productId) => {
  * @param {Object} data - 商品数据，包含 specs 等
  */
 export const addProduct = (data) => {
-  return axios("/merchant/products", "POST", data);
+  return request.post("/merchant/products", data);
 };
 
 /**
@@ -30,13 +30,28 @@ export const addProduct = (data) => {
  * @param {Object} data - 商品更新数据
  */
 export const updateProduct = (productId, data) => {
-  return axios(`/merchant/products/${productId}`, "PUT", data);
+  return request.put(`/merchant/products/${productId}`, data);
 };
 
 /**
  * 获取商品分类树
  */
 export const getProductCategoryTree = () => {
-  return axios("/merchant/product-categories/tree", "GET");
+  return request.get("/merchant/product-categories/tree");
 };
 
+/**
+ * 强制下架商品
+ * @param {number|string} productId - 商品ID
+ */
+export const delistProduct = (productId) => {
+  return request.put(`/merchant/products/${productId}/delist`);
+};
+
+/**
+ * 获取商品变动记录
+ * @param {number|string} productId - 商品ID
+ */
+export const getProductChangeLogs = (productId) => {
+  return request.get(`/merchant/products/${productId}/change-logs`);
+};

@@ -1,10 +1,10 @@
-import { axios } from "@/utils/request.js";
+import request from "@/utils/request.js";
 
 /**
  * 获取商家登录验证码
  */
 export const getCaptcha = () => {
-  return axios("/merchant/auth/captcha", "GET");
+  return request.get("/merchant/auth/captcha");
 };
 
 /**
@@ -12,13 +12,12 @@ export const getCaptcha = () => {
  * @param {Object} data - { username, password, captcha, captchaKey }
  */
 export const login = (data) => {
-  return axios("/merchant/auth/login", "POST", data);
+  return request.post("/merchant/auth/login", data);
 };
 
 /**
  * 获取当前商家信息
  */
 export const getCurrentMerchant = () => {
-  return axios("/merchant/auth/current", "GET");
+  return request.get("/merchant/auth/current");
 };
-
