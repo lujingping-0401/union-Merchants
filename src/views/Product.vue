@@ -53,7 +53,7 @@
                   plain
                   :icon="Search"
                   @click="handleSearch"
-                  >筛选</el-button
+                  >搜索</el-button
                 >
                 <el-button plain :icon="Refresh" @click="handleReset"
                   >重置</el-button
@@ -963,7 +963,9 @@ const loadProducts = async () => {
   try {
     const res = await getProductPage(params);
     if (res && (res.code === 200 || res.code === 0) && res.data) {
-      tableData.value = res.data.records || [];
+      const records = res.data.records || [];
+      records.sort((a, b) => Number(a.id) - Number(b.id));
+      tableData.value = records;
       total.value = Number(res.data.total) || 0;
     } else {
       throw new Error(res?.message || "接口错误");

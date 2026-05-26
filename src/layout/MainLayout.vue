@@ -1,13 +1,13 @@
 <template>
   <el-container class="app-layout">
-    <!-- Header -->
-    <Header />
+    <!-- 侧边栏 (顶满左侧全部高度) -->
+    <Sidebar />
 
-    <el-container class="body-container">
-      <!-- 侧边栏 -->
-      <Sidebar />
+    <el-container class="right-container">
+      <!-- 头部 (放置于右侧顶部) -->
+      <Header />
 
-      <!-- 主要内容 -->
+      <!-- 主要内容 (放置于右侧底部) -->
       <el-main class="app-main">
         <!-- Breadcrumb / Tab Bar -->
         <div class="breadcrumb-bar">
@@ -50,6 +50,7 @@ const cachedNames = computed(() => {
     if (item.path === '/') return 'Home'
     if (item.path === '/product') return 'Product'
     if (item.path === '/product-apply') return 'ProductApply'
+    if (item.path === '/system-settings') return 'SystemSettings'
     return ''
   }).filter(Boolean)
 })
@@ -73,18 +74,19 @@ const handleBreadcrumbClose = (path) => {
 .app-layout {
   height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 横向排列：左侧侧边栏，右侧主容器 */
   overflow: hidden;
 }
 
-.body-container {
+.right-container {
   flex: 1;
   display: flex;
+  flex-direction: column; /* 纵向排列：上方头部，下方主要内容 */
   overflow: hidden;
 }
 
 .app-main {
-  background-color: #fcfcfc;
+  background-color: #f8fafc;
   padding: 10px 10px 10px 10px;
   overflow-y: auto;
   display: flex;

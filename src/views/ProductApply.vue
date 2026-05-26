@@ -19,7 +19,7 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" plain :icon="Search" @click="handleSearch">筛选</el-button>
+            <el-button type="primary" plain :icon="Search" @click="handleSearch">搜索</el-button>
             <el-button plain :icon="Refresh" @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
@@ -456,7 +456,9 @@ const loadApplies = async () => {
       status: searchForm.status !== '' ? searchForm.status : undefined
     });
     if (res && (res.code === 200 || res.code === 0) && res.data) {
-      tableData.value = res.data.records || [];
+      const records = res.data.records || [];
+      records.sort((a, b) => Number(a.id) - Number(b.id));
+      tableData.value = records;
       total.value = res.data.total || 0;
     } else {
       ElMessage.error(res?.message || '获取申请列表失败');
@@ -502,7 +504,9 @@ const loadAvailableProducts = async () => {
       status: 0 // 未上架
     });
     if (res && (res.code === 200 || res.code === 0) && res.data) {
-      availableProducts.value = res.data.records || [];
+      const records = res.data.records || [];
+      records.sort((a, b) => Number(a.id) - Number(b.id));
+      availableProducts.value = records;
     }
   } catch (err) {
     console.error('获取待选商品错误:', err);

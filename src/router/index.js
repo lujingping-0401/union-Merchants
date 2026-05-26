@@ -32,6 +32,12 @@ const routes = [
         name: 'ProductApply',
         component: () => import('@/views/ProductApply.vue'),
         meta: { title: '上架申请' }
+      },
+      {
+        path: 'system-settings',
+        name: 'SystemSettings',
+        component: () => import('@/views/SystemSettings.vue'),
+        meta: { title: '系统设置' }
       }
     ]
   },
