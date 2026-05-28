@@ -403,126 +403,137 @@
               </el-form-item>
             </div>
 
-
-            <el-form-item label="商品详细描述" prop="description" class="desc-form-item">
-              <el-input
-                type="textarea"
-                :rows="4"
-                v-model="productForm.description"
-                placeholder="请输入详细描述商品特点、规格参数、包装清单与售后服务等..."
-                resize="none"
-              />
-            </el-form-item>
+            <!-- 商品规格 -->
+            <div class="specs-section-wrapper">
+              <div class="specs-section-header">
+                <span class="specs-section-title">
+                  <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 (价格、库存、图片)
+                </span>
+                <el-button type="primary" size="small" plain :icon="Plus" @click="addSpec"
+                  >添加规格项</el-button
+                >
+              </div>
+              <el-table
+                :data="productForm.specs"
+                class="specs-modern-table"
+                style="width: 100%"
+                border
+                size="default"
+              >
+                <el-table-column label="规格属性名称" min-width="200">
+                  <template #default="scope">
+                    <el-input
+                      v-model="scope.row.specName"
+                      placeholder="输入规格 (如: 特大果 5kg 箱装)"
+                      size="default"
+                      clearable
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="规格图片" width="100" align="center">
+                  <template #default="scope">
+                    <div
+                      class="spec-img-upload"
+                      @click="triggerSpecUpload(scope.$index)"
+                    >
+                      <el-image
+                        v-if="scope.row.imageUrl"
+                        :src="resolveUrl(scope.row.imageUrl)"
+                        fit="cover"
+                        class="spec-img-thumb"
+                      />
+                      <div v-else class="spec-img-placeholder">
+                        <el-icon><Picture /></el-icon>
+                      </div>
+                      <div
+                        v-if="specUploading[scope.$index]"
+                        class="img-upload-loading spec-loading"
+                      >
+                        <el-icon class="is-loading"><Loading /></el-icon>
+                      </div>
+                    </div>
+                    <input
+                      :ref="(el) => (specInputRefs[scope.$index] = el)"
+                      type="file"
+                      accept="image/*"
+                      style="display: none"
+                      @change="(e) => handleImgFileChange(e, 'spec', scope.$index)"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="单价 (元)" min-width="140">
+                  <template #default="scope">
+                    <el-input-number
+                      v-model="scope.row.price"
+                      :precision="2"
+                      :step="1"
+                      :min="0"
+                      size="default"
+                      controls-position="right"
+                      style="width: 100%"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="库存数量" min-width="130">
+                  <template #default="scope">
+                    <el-input-number
+                      v-model="scope.row.stock"
+                      :min="0"
+                      :step="1"
+                      size="default"
+                      controls-position="right"
+                      style="width: 100%"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="排序值" min-width="110">
+                  <template #default="scope">
+                    <el-input-number
+                      v-model="scope.row.sort"
+                      :min="0"
+                      size="default"
+                      controls-position="right"
+                      style="width: 100%"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="90" align="center">
+                  <template #default="scope">
+                    <el-button
+                      type="danger"
+                      link
+                      :icon="Delete"
+                      size="default"
+                      @click="removeSpec(scope.$index)"
+                      class="spec-delete-btn"
+                    >删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </div>
         </div>
 
-        <!-- 商品规格 -->
-        <div class="specs-section-wrapper">
-          <div class="specs-section-header">
-            <span class="specs-section-title">
-              <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 (价格、库存、图片)
-            </span>
-            <el-button type="primary" size="small" plain :icon="Plus" @click="addSpec"
-              >添加规格项</el-button
-            >
+        <!-- 商品详细描述富文本通栏 -->
+        <div class="desc-editor-section">
+          <div class="desc-section-title">
+            商品详细描述 <span class="required-star">*</span>
           </div>
-          <el-table
-            :data="productForm.specs"
-            class="specs-modern-table"
-            style="width: 100%"
-            border
-            size="default"
-          >
-            <el-table-column label="规格属性名称" min-width="200">
-              <template #default="scope">
-                <el-input
-                  v-model="scope.row.specName"
-                  placeholder="输入规格 (如: 特大果 5kg 箱装)"
-                  size="default"
-                  clearable
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="规格图片" width="100" align="center">
-              <template #default="scope">
-                <div
-                  class="spec-img-upload"
-                  @click="triggerSpecUpload(scope.$index)"
-                >
-                  <el-image
-                    v-if="scope.row.imageUrl"
-                    :src="resolveUrl(scope.row.imageUrl)"
-                    fit="cover"
-                    class="spec-img-thumb"
-                  />
-                  <div v-else class="spec-img-placeholder">
-                    <el-icon><Picture /></el-icon>
-                  </div>
-                  <div
-                    v-if="specUploading[scope.$index]"
-                    class="img-upload-loading spec-loading"
-                  >
-                    <el-icon class="is-loading"><Loading /></el-icon>
-                  </div>
-                </div>
-                <input
-                  :ref="(el) => (specInputRefs[scope.$index] = el)"
-                  type="file"
-                  accept="image/*"
-                  style="display: none"
-                  @change="(e) => handleImgFileChange(e, 'spec', scope.$index)"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="单价 (元)" min-width="140">
-              <template #default="scope">
-                <el-input-number
-                  v-model="scope.row.price"
-                  :precision="2"
-                  :step="1"
-                  :min="0"
-                  size="default"
-                  controls-position="right"
-                  style="width: 100%"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="库存数量" min-width="130">
-              <template #default="scope">
-                <el-input-number
-                  v-model="scope.row.stock"
-                  :min="0"
-                  :step="1"
-                  size="default"
-                  controls-position="right"
-                  style="width: 100%"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="排序值" min-width="110">
-              <template #default="scope">
-                <el-input-number
-                  v-model="scope.row.sort"
-                  :min="0"
-                  size="default"
-                  controls-position="right"
-                  style="width: 100%"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="90" align="center">
-              <template #default="scope">
-                <el-button
-                  type="danger"
-                  link
-                  :icon="Delete"
-                  size="default"
-                  @click="removeSpec(scope.$index)"
-                  class="spec-delete-btn"
-                >删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="editor-container">
+            <Toolbar
+              :editor="editorRef"
+              :defaultConfig="toolbarConfig"
+              mode="default"
+              class="editor-toolbar"
+            />
+            <Editor
+              v-model="productForm.description"
+              :defaultConfig="editorConfig"
+              mode="default"
+              class="editor-content"
+              @onCreated="handleCreated"
+            />
+          </div>
         </div>
       </el-form>
       <template #footer>
@@ -642,66 +653,65 @@
                   </div>
                 </div>
 
-                <!-- Description -->
-                <div class="detail-card desc-card">
-                  <div class="detail-card-title">商品描述</div>
-                  <p class="detail-description">
-                    {{ detailData.description || "暂无商品描述" }}
-                  </p>
+                <!-- Specifications Table -->
+                <div class="detail-card specs-card">
+                  <div class="detail-card-title">
+                    <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 ({{
+                      detailData.specs ? detailData.specs.length : 0
+                    }})
+                  </div>
+                  <el-table
+                    :data="detailData.specs"
+                    class="detail-specs-table"
+                    style="width: 100%"
+                    border
+                    size="default"
+                  >
+                    <el-table-column label="规格图片" width="100" align="center">
+                      <template #default="scope">
+                        <el-image
+                          :src="resolveUrl(scope.row.imageUrl)"
+                          :preview-src-list="[resolveUrl(scope.row.imageUrl)]"
+                          preview-teleported
+                          fit="cover"
+                          class="spec-thumb-img"
+                          v-if="scope.row.imageUrl"
+                        />
+                        <span v-else class="no-img-text">无图</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="specName" label="规格属性名称" min-width="200" />
+                    <el-table-column prop="price" label="单价 (元)" min-width="140">
+                      <template #default="scope">
+                        <span class="price-text"
+                          >¥ {{ (Number(scope.row.price) || 0).toFixed(2) }}</span
+                        >
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      prop="stock"
+                      label="库存数量"
+                      min-width="130"
+                      align="center"
+                    />
+                    <el-table-column
+                      prop="sort"
+                      label="排序值"
+                      min-width="110"
+                      align="center"
+                    />
+                  </el-table>
                 </div>
               </div>
             </div>
 
-            <!-- Specifications Table -->
-            <div class="detail-specs-section-wrapper">
-              <div class="detail-specs-section-header">
-                <span class="detail-specs-section-title">
-                  <el-icon class="specs-title-icon"><List /></el-icon> 商品规格配置 ({{
-                    detailData.specs ? detailData.specs.length : 0
-                  }})
-                </span>
-              </div>
-              <el-table
-                :data="detailData.specs"
-                class="detail-specs-table"
-                style="width: 100%"
-                border
-                size="default"
-              >
-                <el-table-column label="规格图片" width="100" align="center">
-                  <template #default="scope">
-                    <el-image
-                      :src="resolveUrl(scope.row.imageUrl)"
-                      :preview-src-list="[resolveUrl(scope.row.imageUrl)]"
-                      preview-teleported
-                      fit="cover"
-                      class="spec-thumb-img"
-                      v-if="scope.row.imageUrl"
-                    />
-                    <span v-else class="no-img-text">无图</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="specName" label="规格属性名称" min-width="200" />
-                <el-table-column prop="price" label="单价 (元)" min-width="140">
-                  <template #default="scope">
-                    <span class="price-text"
-                      >¥ {{ (Number(scope.row.price) || 0).toFixed(2) }}</span
-                    >
-                  </template>
-                </el-table-column>
-                <el-table-column
-                  prop="stock"
-                  label="库存数量"
-                  min-width="130"
-                  align="center"
-                />
-                <el-table-column
-                  prop="sort"
-                  label="排序值"
-                  min-width="110"
-                  align="center"
-                />
-              </el-table>
+            <!-- 商品详细描述富文本通栏展示 -->
+            <div class="detail-desc-section">
+              <div class="detail-desc-title">商品详细描述</div>
+              <div
+                class="detail-desc-content rich-text-content"
+                v-html="detailData.description || '<p style=\'color: #94a3b8;\'>暂无商品描述</p>'"
+              ></div>
             </div>
           </div>
         </el-tab-pane>
@@ -771,8 +781,10 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive, onMounted, shallowRef, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
+import "@wangeditor/editor/dist/css/style.css";
 import {
   Shop,
   Menu,
@@ -1101,6 +1113,38 @@ const formatChangeValue = (fieldName, value) => {
 };
 
 
+// 富文本编辑器相关配置与生命周期
+const editorRef = shallowRef();
+const toolbarConfig = {};
+const editorConfig = {
+  placeholder: "请输入详细描述商品特点、规格参数、包装清单与售后服务等...",
+  MENU_CONF: {
+    uploadImage: {
+      async customUpload(file, insertFn) {
+        try {
+          const url = await uploadImage(file);
+          if (url) {
+            const absoluteUrl = resolveUrl(url);
+            insertFn(absoluteUrl, "商品图片", absoluteUrl);
+          }
+        } catch (err) {
+          ElMessage.error(err.message || "图片上传失败");
+        }
+      }
+    }
+  }
+};
+
+const handleCreated = (editor) => {
+  editorRef.value = editor;
+};
+
+onBeforeUnmount(() => {
+  const editor = editorRef.value;
+  if (editor == null) return;
+  editor.destroy();
+});
+
 // Create/Edit form dialog state
 const formDialogVisible = ref(false);
 const isEditMode = ref(false);
@@ -1422,7 +1466,6 @@ onMounted(() => {
   gap: 24px;
   padding: 24px;
   background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
 }
 
 /* Left Media Section */
@@ -1718,8 +1761,9 @@ onMounted(() => {
 
 /* Specs Section styling */
 .specs-section-wrapper {
-  padding: 24px;
-  background-color: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
 }
 
 .specs-section-header {
@@ -1981,28 +2025,6 @@ onMounted(() => {
   margin: 0;
   white-space: pre-wrap;
 }
-
-.detail-specs-section-wrapper {
-  padding: 24px;
-  background-color: #f8fafc;
-}
-
-.detail-specs-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.detail-specs-section-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .detail-specs-table {
   border-radius: 10px;
   overflow: hidden;
@@ -2146,5 +2168,141 @@ onMounted(() => {
 .product-form-dialog .el-dialog__body::-webkit-scrollbar-thumb:hover,
 .product-detail-dialog .el-dialog__body::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
+}
+
+/* ===== 富文本与新布局定制 CSS 样式 ===== */
+
+/* 新增商品编辑弹窗中的富文本区块 */
+.desc-editor-section {
+  padding: 0 24px 20px 24px;
+  background-color: #ffffff;
+}
+
+.desc-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-star {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.editor-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.editor-toolbar {
+  border-bottom: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc !important;
+}
+
+.editor-content {
+  height: 320px !important;
+  overflow-y: hidden;
+  background-color: #ffffff;
+}
+
+.w-e-text-container {
+  background-color: #ffffff !important;
+}
+
+/* 商品详情弹窗中的富文本展示区块 */
+.detail-desc-section {
+  padding: 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-desc-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 12px;
+}
+
+.detail-desc-content {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  min-height: 100px;
+}
+
+/* 富文本渲染排版重置与美化 */
+.rich-text-content {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.rich-text-content p {
+  margin: 8px 0;
+}
+
+.rich-text-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 12px 0;
+  display: block;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3,
+.rich-text-content h4,
+.rich-text-content h5,
+.rich-text-content h6 {
+  color: #0f172a;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.rich-text-content li {
+  margin: 4px 0;
+}
+
+.rich-text-content blockquote {
+  border-left: 4px solid #00a86b;
+  background-color: #f1f5f9;
+  padding: 8px 16px;
+  margin: 12px 0;
+  color: #475569;
+  border-radius: 0 6px 6px 0;
+}
+
+.rich-text-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.rich-text-content table th,
+.rich-text-content table td {
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.rich-text-content table th {
+  background-color: #f1f5f9;
+  font-weight: 600;
 }
 </style>
