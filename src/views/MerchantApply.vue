@@ -158,11 +158,22 @@
       <!-- 2. Submission Success Mode -->
       <div v-else class="success-container-card">
         <el-result
-          icon="success"
-          title="入驻申请已成功提交"
-          sub-title="您的入驻申请已进入后台审批流程，请耐心等待审批人员联系或邮件通知。"
+          :icon="resultConfig.icon"
+          :title="resultConfig.title"
+          :sub-title="resultConfig.subTitle"
           class="success-result"
         />
+
+        <!-- Reject Reason Banner -->
+        <div class="reject-reason-box" v-if="detailData && detailData.status === 3">
+          <div class="reject-reason-title">
+            <el-icon><Warning /></el-icon>
+            <span>审批驳回原因</span>
+          </div>
+          <div class="reject-reason-content">
+            {{ detailData.approvalRemark || '无具体驳回意见' }}
+          </div>
+        </div>
 
         <!-- Prominent ID Callout Box -->
         <div class="id-callout-box">
@@ -239,6 +250,9 @@
             <el-descriptions-item label="流程实例 ID">
               {{ detailData.processInstanceId || detailData.instanceId || (detailData.status !== 0 ? '12' : '-') }}
             </el-descriptions-item>
+            <el-descriptions-item label="审批驳回原因" :span="2" v-if="detailData && (detailData.status === 3 || detailData.approvalRemark)">
+              <span class="reject-text-highlight">{{ detailData.approvalRemark || '-' }}</span>
+            </el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -265,7 +279,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -279,7 +293,8 @@ import {
   UploadFilled,
   Delete,
   Picture,
-  EditPen
+  EditPen,
+  Warning
 } from '@element-plus/icons-vue'
 import logoImg from '@/assets/logo.png'
 import { merchantApis } from '@/api/merchantApplyApi'
@@ -295,6 +310,49 @@ const getImageUrl = (url) => {
 }
 
 const router = useRouter()
+
+const resultConfig = computed(() => {
+  if (!detailData.value) {
+    return {
+      icon: 'info',
+      title: '入驻申请已提交',
+      subTitle: '您的入驻申请当前状态未知，如有疑问请联系系统管理员。'
+    }
+  }
+  const status = detailData.value.status
+  switch (status) {
+    case 0:
+      return {
+        icon: 'info',
+        title: '入驻申请已暂存为草稿',
+        subTitle: '您的入驻申请当前为草稿状态，您可以随时点击下方“重新编辑表单”补充或修改内容后正式提交。'
+      }
+    case 1:
+      return {
+        icon: 'info',
+        title: '入驻申请已成功提交',
+        subTitle: '您的入驻申请已进入后台审批流程，请耐心等待审批人员联系或邮件通知。'
+      }
+    case 2:
+      return {
+        icon: 'success',
+        title: '入驻申请已审批通过',
+        subTitle: '恭喜！您的商户入驻申请已审核通过。稍后系统将为您发送开户通知及配置指引，请留意您的邮箱。'
+      }
+    case 3:
+      return {
+        icon: 'error',
+        title: '入驻申请已被驳回',
+        subTitle: '抱歉，您的入驻申请未能通过审核。您可以查看下方的驳回原因，修改对应的信息后重新提交申请。'
+      }
+    default:
+      return {
+        icon: 'info',
+        title: '入驻申请已提交',
+        subTitle: '您的入驻申请当前状态未知，如有疑问请联系系统管理员。'
+      }
+  }
+})
 
 // States: 'form' (填写表单) 或 'detail' (显示详情/进度)
 const currentState = ref('form')
@@ -1047,6 +1105,42 @@ const goBackToLogin = () => {
   padding: 0 0 16px 0;
   border-bottom: 1px solid #f1f5f9;
   width: 100%;
+}
+
+.reject-reason-box {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reject-reason-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.reject-reason-content {
+  color: #7f1d1d;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-left: 24px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.reject-text-highlight {
+  color: #dc2626;
+  font-weight: 600;
 }
 
 /* ID Callout Box styling */

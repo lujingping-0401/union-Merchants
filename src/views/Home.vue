@@ -270,7 +270,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { 
   Plus, 
   Search, 
@@ -670,25 +670,24 @@ const handleResize = () => {
   categoryChart?.resize()
 }
 
-onMounted(() => {
+onMounted(async () => {
   loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    
-    // 初始化趋势图
-    if (trendChartRef.value) {
-      trendChart = echarts.init(trendChartRef.value)
-      trendChart.setOption(getTrendChartOption(timeRange.value))
-    }
-    
-    // 初始化占比图
-    if (categoryChartRef.value) {
-      categoryChart = echarts.init(categoryChartRef.value)
-      categoryChart.setOption(getCategoryChartOption())
-    }
-    
-    window.addEventListener('resize', handleResize)
-  }, 100)
+  await nextTick()
+  loading.value = false
+  
+  // 初始化趋势图
+  if (trendChartRef.value) {
+    trendChart = echarts.init(trendChartRef.value)
+    trendChart.setOption(getTrendChartOption(timeRange.value))
+  }
+  
+  // 初始化占比图
+  if (categoryChartRef.value) {
+    categoryChart = echarts.init(categoryChartRef.value)
+    categoryChart.setOption(getCategoryChartOption())
+  }
+  
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {

@@ -193,8 +193,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="createDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="submitCreateForm">保存草稿</el-button>
+          <el-button :icon="Close" @click="createDialogVisible = false">取消</el-button>
+          <el-button type="primary" :icon="DocumentChecked" :loading="createSubmitLoading" @click="submitCreateForm">保存草稿</el-button>
         </div>
       </template>
     </el-dialog>
@@ -231,6 +231,10 @@
                 </span>
               </div>
               <div class="detail-info-row">
+                <span class="info-label">审核意见：</span>
+                <span class="info-value">{{ detailData.approvalRemark || '-' }}</span>
+              </div>
+              <div class="detail-info-row">
                 <span class="info-label">创建时间：</span>
                 <span class="info-value">{{ formatDate(detailData.createTime) }}</span>
               </div>
@@ -240,56 +244,6 @@
               </div>
             </div>
 
-            <!-- Workflow Timeline -->
-            <div class="detail-section-card workflow-card">
-              <div class="section-card-title">审批流程跟踪</div>
-              <el-timeline class="timeline-container">
-                <el-timeline-item
-                  timestamp="创建时间"
-                  placement="top"
-                  type="success"
-                  :icon="CircleCheck"
-                >
-                  <h4>暂存草稿成功</h4>
-                  <p class="timeline-time">{{ formatDate(detailData.createTime) }}</p>
-                </el-timeline-item>
-                
-                <el-timeline-item
-                  timestamp="审批流状态"
-                  placement="top"
-                  :type="detailData.status >= 1 ? 'success' : 'info'"
-                  :icon="detailData.status >= 1 ? CircleCheck : InfoFilled"
-                >
-                  <h4>提交上架审批</h4>
-                  <p v-if="detailData.status >= 1" class="timeline-time">
-                    已提交至数智工会运营审批平台
-                  </p>
-                  <p v-else class="timeline-time-pending">尚未提交审批</p>
-                </el-timeline-item>
-
-                <el-timeline-item
-                  timestamp="平台审核结果"
-                  placement="top"
-                  :type="getWorkflowResultType(detailData.status)"
-                  :icon="getWorkflowResultIcon(detailData.status)"
-                >
-                  <h4 v-if="detailData.status === 2">审批通过</h4>
-                  <h4 v-else-if="detailData.status === 3">审批被驳回</h4>
-                  <h4 v-else-if="detailData.status === 1">平台审核中</h4>
-                  <h4 v-else>等待平台审核</h4>
-                  <p v-if="detailData.status === 2" class="timeline-time-success">
-                    商品已自动进入已上架状态，开启面向校内公开销售。
-                  </p>
-                  <p v-else-if="detailData.status === 3" class="timeline-time-error">
-                    原因说明：商品主图清晰度不足，或资质材料存在缺失，请修改后重新提交。
-                  </p>
-                  <p v-else-if="detailData.status === 1" class="timeline-time">
-                    工作流已分发给校工会审核专员，预计在1-2个工作日内完成审核。
-                  </p>
-                  <p v-else class="timeline-time-pending">未触发平台审核流程</p>
-                </el-timeline-item>
-              </el-timeline>
-            </div>
           </div>
 
           <!-- Right Column: Products List Table -->
@@ -319,11 +273,12 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button :icon="Close" @click="detailDialogVisible = false">关闭</el-button>
           <el-button
             v-if="detailData && detailData.status === 0"
             type="success"
-            :loading="submitLoading"
+            :icon="Promotion"
+            :loading="detailSubmitLoading"
             @click="handleSubmit(detailData)"
           >
             提交审批
@@ -343,10 +298,8 @@ import {
   Plus,
   View,
   Promotion,
-  CircleCheck,
-  InfoFilled,
-  WarningFilled,
-  CircleCloseFilled
+  Close,
+  DocumentChecked
 } from '@element-plus/icons-vue';
 import { getProductPage } from '@/api/productApi';
 import {
@@ -389,7 +342,8 @@ const loading = ref(false);
 
 // Create dialog state
 const createDialogVisible = ref(false);
-const submitLoading = ref(false);
+const createSubmitLoading = ref(false);
+const detailSubmitLoading = ref(false);
 const availableProducts = ref([]);
 const productsLoading = ref(false);
 const selectedProductIds = ref([]);
@@ -432,19 +386,7 @@ const getStatusTagType = (status) => {
   }
 };
 
-const getWorkflowResultType = (status) => {
-  if (status === 2) return 'success';
-  if (status === 3) return 'danger';
-  if (status === 1) return 'primary';
-  return 'info';
-};
 
-const getWorkflowResultIcon = (status) => {
-  if (status === 2) return CircleCheck;
-  if (status === 3) return CircleCloseFilled;
-  if (status === 1) return InfoFilled;
-  return WarningFilled;
-};
 
 // Load applies list
 const loadApplies = async () => {
@@ -539,7 +481,7 @@ const submitCreateForm = async () => {
       return;
     }
 
-    submitLoading.value = true;
+    createSubmitLoading.value = true;
     try {
       applyForm.productIds = selectedProductIds.value;
       const res = await createProductApply(applyForm);
@@ -553,7 +495,7 @@ const submitCreateForm = async () => {
     } catch (err) {
       console.error('创建上架申请错误:', err);
     } finally {
-      submitLoading.value = false;
+      createSubmitLoading.value = false;
     }
   });
 };
@@ -584,18 +526,12 @@ const handleSubmit = async (row) => {
       type: 'warning'
     }
   ).then(async () => {
-    submitLoading.value = true;
+    detailSubmitLoading.value = true;
     try {
       const res = await submitProductApply(row.id);
       if (res && (res.code === 200 || res.code === 0)) {
         ElMessage.success('提交审批成功！');
-        // Refresh details if visible
-        if (detailDialogVisible.value && detailData.value?.id === row.id) {
-          const detailRes = await getProductApplyDetail(row.id);
-          if (detailRes && detailRes.data) {
-            detailData.value = detailRes.data;
-          }
-        }
+        detailDialogVisible.value = false;
         await loadApplies();
       } else {
         ElMessage.error(res?.message || '提交审批失败');
@@ -603,7 +539,7 @@ const handleSubmit = async (row) => {
     } catch (err) {
       console.error('提交审批出错:', err);
     } finally {
-      submitLoading.value = false;
+      detailSubmitLoading.value = false;
     }
   }).catch(() => {});
 };
@@ -618,6 +554,13 @@ onMounted(() => {
   height: calc(100vh - 110px);
   display: flex;
   flex-direction: column;
+}
+
+.apply-form,
+.apply-detail-content {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 15px;
 }
 
 .apply-table {
@@ -799,37 +742,6 @@ onMounted(() => {
   color: #0f172a;
 }
 
-.timeline-container {
-  padding-top: 10px;
-  padding-left: 5px;
-}
-
-.timeline-time {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 4px 0 0 0;
-}
-
-.timeline-time-pending {
-  font-size: 12px;
-  color: #cbd5e1;
-  margin: 4px 0 0 0;
-  font-style: italic;
-}
-
-.timeline-time-success {
-  font-size: 12px;
-  color: #10b981;
-  margin: 4px 0 0 0;
-  line-height: 1.4;
-}
-
-.timeline-time-error {
-  font-size: 12px;
-  color: #ef4444;
-  margin: 4px 0 0 0;
-  line-height: 1.4;
-}
 
 .detail-product-img {
   width: 50px;
@@ -850,10 +762,4 @@ onMounted(() => {
   gap: 12px;
 }
 
-:deep(.el-timeline-item__content h4) {
-  margin: 0;
-  color: #334155;
-  font-size: 14px;
-  font-weight: bold;
-}
 </style>
